@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.virtualscheduler.VirtualThreadSchedulerTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-03-26T01:50:28.374Z" hostname="HHHAN-NB01" time="3.531">
+  <properties/>
+  <testcase name="[AS-IS] 동시 800건 → 임계값(600) 초과, DB 타임아웃 폭발" classname="io.github.virtualscheduler.VirtualThreadSchedulerTest" time="0.869"/>
+  <testcase name="[TO-BE] 동시 800건 → 세마포어(200) 제한, DB 보호, 전량 성공" classname="io.github.virtualscheduler.VirtualThreadSchedulerTest" time="0.883"/>
+  <testcase name="[AS-IS] 재전송 500건 DB 점유 중 실시간 10건 → DB 커넥션 경쟁, 실시간 지연" classname="io.github.virtualscheduler.VirtualThreadSchedulerTest" time="0.663"/>
+  <testcase name="[TO-BE] 재전송 500건 executor 중 실시간 10건 → 독립 executor, 재전송 무영향" classname="io.github.virtualscheduler.VirtualThreadSchedulerTest" time="0.542"/>
+  <testcase name="[AS-IS] kill -15 → join 없음, 처리 중 건 유실 가능" classname="io.github.virtualscheduler.VirtualThreadSchedulerTest" time="0.131"/>
+  <testcase name="[TO-BE] kill -15 → awaitTermination(60s), 전량 완료 보장" classname="io.github.virtualscheduler.VirtualThreadSchedulerTest" time="0.114"/>
+  <testcase name="[TO-BE] 세마포어(fair=true) → 동시 실행 permits 이하 보장 + FIFO 순서" classname="io.github.virtualscheduler.VirtualThreadSchedulerTest" time="0.32"/>
+  <system-out><![CDATA[
+┌─ [AS-IS] 동시 800건 — DB 커넥션 고갈
+│  성공=605건 | 타임아웃=195건 | 최대 동시 DB=100 | 소요=758ms
+└→ 플랫폼 스레드 800개 × 1MB ≈ ~800MB OS 스택 | 임계값(600) 초과 → 타임아웃 폭발
+
+┌─ [TO-BE] 동시 800건 — 세마포어 보호
+│  성공=800건 | 타임아웃=0건 | 최대 동시 DB=100 | 소요=873ms | 이론최소=800ms
+└→ 가상 스레드 800개 = 수십MB | Semaphore(200) → 타임아웃 없음
+
+┌─ [AS-IS] 재전송 500 + 실시간 10 — DB 공유
+│  실시간 평균 DB 대기=405ms | DB 풀=100개 공유
+└→ 재전송이 커넥션 선점 → 실시간이 대기 → WAS 응답 지연
+
+┌─ [TO-BE] 재전송 500 + 실시간 10 — 독립 executor
+│  실시간 평균 대기=0ms | 재전송/실시간 executor 완전 분리
+└→ 독립 executor → 재전송 DB 점유가 실시간에 영향 없음 | 실시간 10건 < Semaphore(200) → 즉시 처리
+
+┌─ [AS-IS] kill -15 시뮬레이션
+│  kill 시점 완료=0건 | 실제 완료=100건 | 유실 가능=100건
+└→ join() 없음 → kill -15 시 처리 중인 100건 유실 | RE_TABLE 미생성
+
+┌─ [TO-BE] kill -15 → graceful shutdown
+│  submit된 100건 모두 완료=100건
+└→ awaitTermination(60s) → 큐에 남은 작업 전부 처리 후 JVM 종료 | 데이터 유실 없음
+
+┌─ [TO-BE] 세마포어 동시 실행 제한
+│  완료=500건 | 최대 동시 실행=200건 | semaphorePermits=200
+└→ 최대 동시 실행 ≤ 200 → DB 풀 보호 | fair=true → FIFO 순서 보장
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
