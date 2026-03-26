@@ -200,7 +200,7 @@ kill -15
 
 ┌─ [TO-BE] 세마포어 동시 실행 제한
 │  완료=500건 | 최대 동시 실행=200건 | semaphorePermits=200
-└→ 최대 동시 실행 ≤ 200 → DB 풀 보호 | fair=true → FIFO 순서 보장```
+└→ 최대 동시 실행 ≤ 200 → DB 풀 보호 | fair=true → FIFO 순서 보장
 ```
 
 ---
