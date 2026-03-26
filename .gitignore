@@ -1,0 +1,6 @@
+# Gradle
+.gradle/
+build/
+
+# Local DSL or generated stuff
+dsl/
